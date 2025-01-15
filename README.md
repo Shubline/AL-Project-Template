@@ -1,4 +1,4 @@
-# AL-Go Per Tenant Extension Template
+# ShubNav
 For Internal Development / Testing of the functionality in business central
 
 ## Contributer

@@ -1,8 +1,36 @@
 {
+    // VS Code Extension For AL Development
+    "extensions": {
+        "recommendations": [
+            "waldo.al-extension-pack"
+        ]
+    },
+    // WorkSpace 
     "folders": [
+        {
+            "path": "ShubNav"
+        },
         {
             "path": ".AL-Go"
         }
     ],
-    "settings": {}
+    // VS Code Settings For AL
+    "settings": {
+        "al.codeAnalyzers": [
+            // "${AppSourceCop}",
+            // "${CodeCop}",
+            // "${PerTenantExtensionCop}",
+            // "${UICop}"
+        ],
+        "al.enableCodeAnalysis": true,
+        "al.enableCodeActions": true,
+        // VS Code Settings For Editor
+        "[al]": {
+            "editor.wordBasedSuggestions": "off",
+            "editor.suggestSelection": "first",
+            "editor.formatOnSave": true,
+            "editor.semanticHighlighting.enabled": true,
+            "editor.inlayHints.fontSize": 12,
+        },
+    }
 }
