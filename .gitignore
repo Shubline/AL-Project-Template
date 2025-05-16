@@ -19,3 +19,7 @@ rad.json
 .snapshots/
 cache_*
 ~$*
+# Allow .app files in specific directories
+!output/*.app
+!build/*.app
+!dist/*.app
