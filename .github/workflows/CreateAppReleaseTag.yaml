@@ -1,4 +1,4 @@
-name: Create a new Release/Tag #git
+name: Create a new Release/Tag
 
 run-name: "Create a new Release/Tag - Version [${{ inputs.tag }}]"
 
@@ -7,9 +7,9 @@ on:
     branches:
       - main
     paths:
-      - '**/*.app'
-      - '**/*.al'
-      - '**/app.json'
+      - 'src/**/*.app'
+      - 'src/**/*.al'
+      - 'src/app.json'
       - '.github/workflows/**'
 
 permissions:
@@ -37,20 +37,15 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Debug - List all files
-        run: ls -R
-
-      - name: Read app version from app.json
+      - name: Read app version from src/app.json
         id: check_changes
         run: |
-          APP_JSON_PATH=$(find . -type f -name "app.json" | head -n 1)
-
-          if [ -f "$APP_JSON_PATH" ]; then
-            APP_VERSION=$(jq -r '.version' "$APP_JSON_PATH")
+          if [ -f "src/app.json" ]; then
+            APP_VERSION=$(jq -r '.version' src/app.json)
             echo "app_version=$APP_VERSION" >> $GITHUB_OUTPUT
-            echo "Found app version in $APP_JSON_PATH: $APP_VERSION"
+            echo "Found app version: $APP_VERSION"
           else
-            echo "::error::app.json not found"
+            echo "::error::src/app.json not found"
             exit 1
           fi
 
@@ -96,9 +91,10 @@ jobs:
         id: find_app
         if: steps.version_check.outputs.version_changed == 'true'
         run: |
-          mkdir -p ./output ./build ./dist ./release_temp
-          echo "Searching for .app files..."
-          APP_FILES=$(find ./output ./build ./dist . -type f -name "*.app" ! -path "*/node_modules/*" 2>/dev/null)
+          mkdir -p ./release_temp
+          echo "Searching for .app files in ./src, ./output, ./build, ./dist"
+
+          APP_FILES=$(find ./src ./output ./build ./dist -type f -name "*.app" ! -path "*/node_modules/*" 2>/dev/null)
 
           if [ -z "$APP_FILES" ]; then
             echo "::error::No .app files found for release! Please check your build pipeline or directory structure."
@@ -106,7 +102,7 @@ jobs:
           else
             echo "$APP_FILES" | xargs -I {} zip -j release_temp/al-app-files.zip "{}"
             echo "app_files=release_temp/al-app-files.zip" >> $GITHUB_OUTPUT
-            echo "Zipped .app files."
+            echo "Zipped app files into release_temp/al-app-files.zip"
           fi
 
       - name: Generate Release Notes
@@ -128,6 +124,7 @@ jobs:
             echo "### Commits" >> release_notes.md
             git log --pretty=format:"* %s" ${PREVIOUS_TAG}..HEAD >> release_notes.md
           fi
+
           cat release_notes.md
 
       - name: Create GitHub Release
@@ -145,12 +142,11 @@ jobs:
       - name: Notify if No App Files Found
         if: steps.version_check.outputs.version_changed == 'true'
         run: |
-          mkdir -p ./output ./build ./dist ./release_temp
-          APP_COUNT=$(find ./output ./build ./dist . -type f -name "*.app" ! -path "*/node_modules/*" 2>/dev/null | wc -l)
+          APP_COUNT=$(find ./src ./output ./build ./dist -type f -name "*.app" ! -path "*/node_modules/*" 2>/dev/null | wc -l)
 
           if [ "$APP_COUNT" -eq "0" ]; then
             echo "::error::No .app files found to release. Please check your build pipeline or .gitignore settings."
-            ls -R ./output ./build ./dist ./release_temp . || echo "No directories found."
             exit 1
           else
             echo "✅ Found $APP_COUNT .app file(s) for release."
+          fi
