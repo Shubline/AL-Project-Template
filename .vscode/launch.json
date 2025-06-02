@@ -1,0 +1,52 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            // Set-NAVServerConfiguration -ServerInstance BC200 -KeyName ClientServicesCredentialType -KeyValue NavUserPassword
+           
+            "name": "Publish: Microsoft cloud sandbox",
+            "type": "al",
+            "request": "launch",
+            "environmentType": "Sandbox",
+            // "environmentName": "DEV",
+            // "startupCompany": "",
+            "startupObjectId": 50000,
+            "startupObjectType": "Page",
+            "breakOnError": "All",
+            "breakOnRecordWrite": "None",
+            "launchBrowser": true,
+            "enableSqlInformationDebugger": true,
+            "enableLongRunningSqlStatements": true,
+            "longRunningSqlStatementsThreshold": 500,
+            "numberOfSqlStatements": 10,
+            "schemaUpdateMode": "ForceSync",
+            // "tenant": "default",
+            // "preLaunchTask": "Commit and Push to GitHub",
+        },
+        {
+            "name": "Attach: BC SAAS Debug",
+            "type": "al",
+            "request": "attach",
+            "environmentType": "Sandbox",
+            "environmentName": "DEV",
+            "breakOnError": "All",
+            "breakOnRecordWrite": "None",
+            "enableSqlInformationDebugger": true,
+            "enableLongRunningSqlStatements": true,
+            "longRunningSqlStatementsThreshold": 500,
+            "numberOfSqlStatements": 10,
+            "breakOnNext": "WebClient"
+        },
+        {
+            "name": "snapshotInitialize: Microsoft production cloud",
+            "type": "al",
+            "request": "snapshotInitialize",
+            "environmentType": "Production",
+            "environmentName": "production",
+            "breakOnNext": "WebClient",
+            "executionContext": "DebugAndProfile",
+            "userId": "ADMIN",
+            "snapshotVerbosity": "Full"
+        }
+    ]
+}

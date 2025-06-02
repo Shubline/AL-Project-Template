@@ -1,0 +1,35 @@
+{
+    // To Enforcer the AL Language Rules Defined By Microsoft
+    "al.codeAnalyzers": [
+        // "${AppSourceCop}",
+        // "${CodeCop}",
+        // "${PerTenantExtensionCop}",
+        // "${UICop}"
+    ],
+
+    // Code Analysis
+    // "al.enableCodeAnalysis": true,
+    // "al.enableCodeActions": true,
+    
+    // For DotNet Variables
+    "al.assemblyProbingPaths": [
+        "./.netpackages",
+        "C:/Program Files/Assemblies"
+    ],
+    // AL Langauge Specific Changes
+    "[al]": {
+        // VS Code Editor Changes For AL
+        "editor.wordBasedSuggestions": "off",
+        "editor.suggestSelection": "first",
+        "editor.formatOnSave": true,
+        "editor.autoIndent": "advanced",
+        "editor.semanticHighlighting.enabled": true,
+        "editor.inlayHints.fontSize": 12,
+        "editor.trimAutoWhitespace": true,
+        "editor.defaultFormatter": "ms-dynamics-smb.al",
+        // VS Code File Changes For AL
+        "files.autoSave": "onFocusChange",
+        "files.trimTrailingWhitespace": true,
+        "editor.smoothScrolling": true
+    }
+}
