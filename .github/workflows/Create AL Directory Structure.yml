@@ -136,13 +136,12 @@ jobs:
         if git diff --staged --quiet; then
           echo "No changes to commit"
         else
-          commit_msg="🏗️ Create AL project: ${{ github.event.inputs.project_name }}
+          git commit -m "🏗️ Create AL project: ${{ github.event.inputs.project_name }}
 
-- Folder structure with standard AL object types
-- Reports directory with Layouts and Extensions  
-- .gitkeep placeholders for Git tracking"
+        - Folder structure with standard AL object types
+        - Reports directory with Layouts and Extensions  
+        - .gitkeep placeholders for Git tracking"
           
-          git commit -m "$commit_msg"
           git push origin "$branch"
           echo "Successfully created AL project folder: $base"
         fi
