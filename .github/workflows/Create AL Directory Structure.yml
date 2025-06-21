@@ -1,176 +1,148 @@
-# 🛠️ GitHub Actions Workflow: Create AL Project Folder
-# Description: This workflow creates a standard folder structure for AL (Business Central) projects.
-
-name: Create AL Directory Structure
-
+name: Create AL Project Folder
 on:
   workflow_dispatch:
     inputs:
       project_name:
-        description: "Enter the AL Project name (folder will be created with this name)"
+        description: "AL project name (folder will be created with this name)"
         required: true
         default: "MyALProject"
       branch_name:
-        description: "Enter the branch name to commit the folder to"
+        description: "Branch to commit the folder to"
         required: true
         default: "main"
       preserve_case:
-        description: "Preserve original case in folder name ?"
+        description: "Preserve original case in folder name?"
         type: boolean
         default: true
 
 jobs:
-  create-al-project-folder:
+  create-folder:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Validate inputs
+    - name: Validate project name
       run: |
         if [[ "${{ github.event.inputs.project_name }}" =~ [^a-zA-Z0-9._-] ]]; then
-          echo "❌ Project name contains invalid characters."
+          echo "Invalid characters in project name."
           exit 1
         fi
-
-        reserved_names=("src" "output" "node_modules" ".git" ".github" ".vscode")
-        lower_input=$(echo '${{ github.event.inputs.project_name }}' | tr '[:upper:]' '[:lower:]')
-        for reserved in "${reserved_names[@]}"; do
-          if [ "$lower_input" = "$reserved" ]; then
-            echo "❌ '${{ github.event.inputs.project_name }}' is a reserved folder name."
+        reserved=("src" "output" "node_modules" ".git" ".github" ".vscode")
+        name=$(echo '${{ github.event.inputs.project_name }}' | tr '[:upper:]' '[:lower:]')
+        for r in "${reserved[@]}"; do
+          if [ "$name" = "$r" ]; then
+            echo "Reserved folder name."
             exit 1
           fi
         done
-        echo "✅ Input validation passed"
 
-    - name: Checkout repository
+    - name: Checkout repo
       uses: actions/checkout@v4
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         ref: ${{ github.event.inputs.branch_name }}
         fetch-depth: 0
 
-    - name: Validate branch exists
+    - name: Check branch exists
       run: |
-        if ! git ls-remote --heads origin ${{ github.event.inputs.branch_name }} | grep -q ${{ github.event.inputs.branch_name }}; then
-          echo "❌ Branch '${{ github.event.inputs.branch_name }}' does not exist"
-          exit 1
+        if ! git show-ref --verify --quiet refs/heads/${{ github.event.inputs.branch_name }}; then
+          if ! git show-ref --verify --quiet refs/remotes/origin/${{ github.event.inputs.branch_name }}; then
+            echo "Branch '${{ github.event.inputs.branch_name }}' does not exist locally or remotely."
+            exit 1
+          fi
         fi
-        echo "✅ Target branch exists"
 
     - name: Set variables
       id: vars
       run: |
-        if [ "${{ github.event.inputs.preserve_case }}" = "true" ]; then
-          project_dir="${{ github.event.inputs.project_name }}"
-        else
-          project_dir=$(echo '${{ github.event.inputs.project_name }}' | tr '[:upper:]' '[:lower:]')
+        name="${{ github.event.inputs.project_name }}"
+        if [ "${{ github.event.inputs.preserve_case }}" != "true" ]; then
+          name=$(echo "$name" | tr '[:upper:]' '[:lower:]')
         fi
-        echo "project_dir=$project_dir" >> $GITHUB_OUTPUT
+        echo "project_dir=$name" >> $GITHUB_OUTPUT
         echo "branch_name=${{ github.event.inputs.branch_name }}" >> $GITHUB_OUTPUT
 
-    - name: Check existing folders (case-insensitive)
-      id: check-folder
+    - name: Check existing folder
+      id: check
       run: |
-        project_name="${{ github.event.inputs.project_name }}"
-        match_dir=$(find . -maxdepth 1 -type d -iname "$project_name" -not -path "." -print -quit)
-
-        if [ -n "$match_dir" ]; then
+        if [ -d "${{ github.event.inputs.project_name }}" ]; then
           echo "exists=true" >> $GITHUB_OUTPUT
-          echo "existing_dir=$match_dir" >> $GITHUB_OUTPUT
-          echo "⚠️ Directory '$match_dir' already exists"
+          echo "existing_dir=${{ github.event.inputs.project_name }}" >> $GITHUB_OUTPUT
         else
-          echo "exists=false" >> $GITHUB_OUTPUT
+          # Case-insensitive check for different naming
+          match=$(find . -maxdepth 1 -type d -iname "${{ github.event.inputs.project_name }}" -not -path "." | head -n 1)
+          if [ -n "$match" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "existing_dir=$match" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
         fi
 
-    - name: Create or update AL folder structure
+    - name: Exit if folder exists
+      if: steps.check.outputs.exists == 'true'
       run: |
-        base_dir="${{ steps.vars.outputs.project_dir }}"
+        echo "Folder already exists: ${{ steps.check.outputs.existing_dir }}"
+        echo "Skipping folder creation to avoid conflicts."
+        exit 0
 
-        declare -A al_dirs=(
-          ["Codeunit"]="Business logic and functions"
-          ["ControlAddin"]="Custom UI controls"
-          ["Dashboards"]="Role Center customizations"
-          ["Enum"]="Enumeration types"
-          ["Interface"]="Interface definitions"
-          ["Page"]="UI pages"
-          ["Page Extension"]="Modifications to pages"
-          ["Query"]="Data queries"
-          ["Report Processing Only"]="Reports without layout"
-          ["Table"]="Table definitions"
-          ["Table Extension"]="Modifications to tables"
-          ["XmlPort"]="XML import/export"
-          ["Xml"]="XML utilities"
-        )
-
-        declare -A report_dirs=(
-          ["Reports"]="Reports root"
-          ["Reports/Layouts"]="RDLC/Word layouts"
-          ["Reports/Report Extension"]="Report extensions"
-          ["Reports/Report"]="Custom report definitions"
-        )
-
-        echo "📁 Creating base directory: $base_dir"
-        mkdir -p "$base_dir"
-
-        echo "📦 Ensuring AL object directories exist..."
-        for dir in "${!al_dirs[@]}"; do
-          target="$base_dir/$dir"
-          if [ ! -d "$target" ]; then
-            mkdir -p "$target"
-            echo "✅ Created: $target"
-          else
-            echo "ℹ️ Exists: $target"
-          fi
-        done
-
-        echo "📊 Ensuring report substructure..."
-        for dir in "${!report_dirs[@]}"; do
-          target="$base_dir/$dir"
-          if [ ! -d "$target" ]; then
-            mkdir -p "$target"
-            echo "✅ Created: $target"
-          else
-            echo "ℹ️ Exists: $target"
-          fi
-        done
-
-    - name: Create README.md if not exists
+    - name: Create AL structure
+      if: steps.check.outputs.exists == 'false'
       run: |
-        base_dir="${{ steps.vars.outputs.project_dir }}"
-        readme="$base_dir/README.md"
+        base="${{ steps.vars.outputs.project_dir }}"
+        mkdir -p "$base"
+        
+        # Create standard AL object directories
+        declare -a dirs=(
+          "Codeunit"
+          "ControlAddin"
+          "Dashboards"
+          "Enum"
+          "Interface"
+          "Page"
+          "PageExtension"
+          "Query"
+          "ReportProcessingOnly"
+          "Table"
+          "TableExtension"
+          "XmlPort"
+          "Xml"
+          "Reports"
+          "Reports/Layouts"
+          "Reports/ReportExtension"
+          "Reports/Report"
+        )
+        
+        for d in "${dirs[@]}"; do
+          mkdir -p "$base/$d"
+          touch "$base/$d/.gitkeep"
+        done
+        
+        # Create root .gitkeep
+        touch "$base/.gitkeep"
 
-        if [ ! -f "$readme" ]; then
-          cat > "$readme" << EOF
-# ${{ github.event.inputs.project_name }}
-
-    - name: Configure Git
+    - name: Git config
+      if: steps.check.outputs.exists == 'false'
       run: |
         git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action - AL Project Creator"
+        git config --local user.name "GitHub Action"
 
-    - name: Commit and push changes
+    - name: Commit and push
+      if: steps.check.outputs.exists == 'false'
       run: |
-        base_dir="${{ steps.vars.outputs.project_dir }}"
+        base="${{ steps.vars.outputs.project_dir }}"
         branch="${{ steps.vars.outputs.branch_name }}"
-
-        find "$base_dir" -type d -exec touch {}/.gitkeep \;
-
-        git add "$base_dir/"
-
+        
+        git add "$base"
+        
         if git diff --staged --quiet; then
-          echo "⚠️ No changes to commit"
+          echo "No changes to commit"
         else
-          git commit -m "🏗️ Update AL project: ${{ github.event.inputs.project_name }} - $(date)"
-          git push origin "$branch"
-          echo "✅ Changes pushed"
-        fi
+          commit_msg="🏗️ Create AL project: ${{ github.event.inputs.project_name }}
 
-    - name: Summary
-      if: always()
-      run: |
-        echo "🎯 Workflow Summary"
-        echo "==================="
-        echo "📁 Folder: ${{ steps.vars.outputs.project_dir }}"
-        echo "🌿 Branch: ${{ steps.vars.outputs.branch_name }}"
-        echo "📦 Structure: AL objects + Reports + README.md"
-        echo "🗂️ .gitkeep used for empty folders"
-        echo "✅ Completed"
+- Folder structure with standard AL object types
+- Reports directory with Layouts and Extensions  
+- .gitkeep placeholders for Git tracking"
+          
+          git commit -m "$commit_msg"
+          git push origin "$branch"
+          echo "Successfully created AL project folder: $base"
+        fi
