@@ -19,6 +19,10 @@ on:
         type: boolean
         default: true
 
+permissions:
+  contents: write
+  packages: read
+
 jobs:
   create-al-project-folder:
     runs-on: ubuntu-latest
