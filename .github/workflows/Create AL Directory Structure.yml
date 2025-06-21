@@ -104,19 +104,20 @@ jobs:
 
         # Declare standard AL object directories and descriptions
         declare -A al_dirs=(
-          ["Codeunit"]="Business logic and functions"
-          ["ControlAddin"]="Custom UI controls and JavaScript integrations"
-          ["Dashboards"]="Role Center customizations and dashboard parts"
-          ["Enum"]="Enumeration types for option fields"
-          ["Interface"]="Interface definitions for dependency injection"
-          ["Page"]="User interface pages (cards, lists, etc.)"
-          ["Page Extension"]="Modifications to existing pages"
-          ["Query"]="Data queries for reporting and analysis"
-          ["Report Processing Only"]="Reports without layouts (data processing)"
-          ["Table"]="Database table definitions"
-          ["Table Extension"]="Modifications to existing tables"
-          ["XmlPort"]="XML import/export functionality"
-          ["Xml"]="XML-related utilities and schemas"
+          ["src"]="Main Source Code directory"
+          ["src/Codeunit"]="Business logic and utility functions"
+          ["src/ControlAddin"]="Custom UI controls and JavaScript addins"
+          ["src/Enum"]="Enumeration types and option sets"
+          ["src/Interface"]="Interface definitions for dependency injection"
+          ["src/Page"]="User interface pages"
+          ["src/PageExtension"]="Extensions to existing pages"
+          ["src/Query"]="Data queries and analytics"
+          ["src/Report Processing Only"]="Custom report definitions"
+          ["src/Table"]="Data table definitions"
+          ["src/TableExtension"]="Extensions to existing tables"
+          ["src/XmlPort"]="XML import/export definitions"
+          ["src/Permissionset"]="Permission sets and security"
+          ["src/Profile"]="User profiles and role centers"
         )
 
         # Declare report-related subdirectories
@@ -127,7 +128,7 @@ jobs:
           ["Reports/Report"]="Custom report definitions and logic"
         )
 
-        echo "🏗️ Creating AL project structure: $base_dir"
+        echo "Creating AL project structure: $base_dir"
         mkdir -p "$base_dir"
         echo "📁 Created base directory: $base_dir"
 
