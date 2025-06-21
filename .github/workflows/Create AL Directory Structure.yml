@@ -1,7 +1,7 @@
 # 🛠️ GitHub Actions Workflow: Create AL Project Folder 
 # Description: This workflow creates a standard folder structure for AL (Business Central) projects.
 
-name: Create AL Project Folder
+name: Create AL Directory Structure
 
 on:
   workflow_dispatch:
@@ -106,11 +106,11 @@ jobs:
           ["Enum"]="Enumeration types for option fields"
           ["Interface"]="Interface definitions for dependency injection"
           ["Page"]="User interface pages (cards, lists, etc.)"
-          ["PageExtension"]="Modifications to existing pages"
+          ["Page Extension"]="Modifications to existing pages"
           ["Query"]="Data queries for reporting and analysis"
-          ["ReportProcessingOnly"]="Reports without layouts (data processing)"
+          ["Report Processing Only"]="Reports without layouts (data processing)"
           ["Table"]="Database table definitions"
-          ["TableExtension"]="Modifications to existing tables"
+          ["Table Extension"]="Modifications to existing tables"
           ["XmlPort"]="XML import/export functionality"
           ["Xml"]="XML-related utilities and schemas"
         )
@@ -119,7 +119,7 @@ jobs:
         declare -A report_dirs=(
           ["Reports"]="Main reports directory"
           ["Reports/Layouts"]="Report layout files (RDLC, Word templates)"
-          ["Reports/ReportExtension"]="Extensions to existing standard reports"
+          ["Reports/Report Extension"]="Extensions to existing standard reports"
           ["Reports/Report"]="Custom report definitions and logic"
         )
 
@@ -143,16 +143,13 @@ jobs:
 
         echo "🎉 AL project structure created successfully!"
 
-    # ✅ Step 7: Create .gitkeep files for empty directories
-    - name: Create .gitkeep files
+    # ✅ Step 7: Create .gitkeep with structure details
+    - name: Create placeholder file
       if: steps.check-folder.outputs.exists == 'false'
       run: |
         base_dir="${{ steps.vars.outputs.project_dir }}"
-        
-        # Create .gitkeep files in all directories to ensure they're tracked by Git
-        find "$base_dir" -type d -exec touch {}/.gitkeep \;
-        
-        echo "📝 Created .gitkeep files in all directories"
+        echo "# Placeholder for Git tracking" > "$base_dir/.gitkeep"
+        echo "📄 Created .gitkeep file"
 
     # ✅ Step 8: Set Git config for committing
     - name: Configure Git
@@ -168,22 +165,28 @@ jobs:
         base_dir="${{ steps.vars.outputs.project_dir }}"
         branch="${{ steps.vars.outputs.branch_name }}"
 
+        # Add .gitkeep to track empty directories
+        find "$base_dir" -type d -exec touch {}/.gitkeep \;
+
         git add "$base_dir/"
 
         if git diff --staged --quiet; then
           echo "⚠️ No changes to commit"
         else
-          git commit -m "🏗️ Create AL project: ${{ github.event.inputs.project_name }}
+          commit_msg="🏗️ Create AL project: ${{ github.event.inputs.project_name }}
 
-✨ Features:
-- AL object directory structure
-- Reports structure with Layouts and Extensions
-- .gitkeep files for tracking empty directories
+          ✨ Features:
+          - AL object directory structure
+          - Reports structure with Layouts and Extensions
+          - README documentation
+          - .gitkeep files for tracking
 
-📁 Project: $base_dir
-🌿 Branch: $branch
-📅 Created: $(date)"
+          📁 Project: $base_dir
+          🌿 Branch: $branch
+          📅 Created: $(date)"
           
+          git commit -m "$commit_msg"
+
           if git push origin "$branch"; then
             echo "✅ Successfully pushed to $branch"
           else
@@ -208,7 +211,8 @@ jobs:
           echo "📋 Structure includes:"
           echo "  - AL Object folders"
           echo "  - Reports (Layouts, Extensions)"
-          echo "  - .gitkeep files for Git tracking"
+          echo "  - README.md"
+          echo "  - .gitkeep for Git tracking"
         fi
 
         echo ""
